@@ -257,7 +257,7 @@ int main() {
         }
         window.draw(sprite);
         auto sfmg = sf::Mouse::getPosition(window);
-        std::cout << "(" << sfmg.x << ", " << sfmg.y << ")";
+        //std::cout << "(" << sfmg.x << ", " << sfmg.y << ")";
         window.display();
     }
 }

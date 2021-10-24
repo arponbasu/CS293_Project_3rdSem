@@ -1,3 +1,7 @@
+For running animation:
+1. Type  "  make '.RECIPEPREFIX+='  "
+2. Then type ./main & press enter
+3. Then type either "normal" or "exp-res" 
 The various features of this animation are:
 1. Press U for moving fractal upwards
 2. Press D for moving fractal downwards
@@ -5,4 +9,5 @@ The various features of this animation are:
 4. Press R for moving fractal right
 5. Press S to take screenshot of the fractal
 6. See titlebar for zoom level
+
 
