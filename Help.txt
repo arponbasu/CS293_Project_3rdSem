@@ -1,0 +1,8 @@
+The various features of this animation are:
+1. Press U for moving fractal upwards
+2. Press D for moving fractal downwards
+3. Press L for moving fractal left
+4. Press R for moving fractal right
+5. Press S to take screenshot of the fractal
+6. See titlebar for zoom level
+
