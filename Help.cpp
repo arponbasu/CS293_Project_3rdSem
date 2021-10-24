@@ -1,31 +1,35 @@
 #include <SFML/Graphics.hpp>
 #include <fstream>
 #include <string>
-
+#include<iostream>
 int main() {
-    sf::RenderWindow sfmlWin(sf::VideoMode(600, 360), "Help Window");
+    sf::RenderWindow window(sf::VideoMode(600, 360), "Help Window");
     sf::Font font;
-    //You need to pass the font file location
+    std::ifstream ifs("Help.txt");
+    std::string content;
+    content.assign( (std::istreambuf_iterator<char>(ifs) ),
+                  (std::istreambuf_iterator<char>()    ) );
+    //std:: cout << content;
     if (!font.loadFromFile("times new roman.ttf")) {
         return -1;
     }
-    sf::Text message("Hello, World !", font);
+    sf::Text message(content, font);
 
-    while (sfmlWin.isOpen()) {
+    while (window.isOpen()) {
 
         sf::Event e;
-        while (sfmlWin.pollEvent(e)) {
+        while (window.pollEvent(e)) {
 
             switch (e.type) {
             case sf::Event::EventType::Closed:
-                sfmlWin.close();
+                window.close();
                 break;
             }
         }
 
-        sfmlWin.clear();
-        sfmlWin.draw(message);
-        sfmlWin.display();
+        window.clear();
+        window.draw(message);
+        window.display();
     }
     return 0;
 }
