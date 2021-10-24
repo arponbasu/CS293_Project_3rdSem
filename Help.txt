@@ -9,5 +9,8 @@ The various features of this animation are:
 4. Press R for moving fractal right
 5. Press S to take screenshot of the fractal
 6. See titlebar for zoom level
+7. Press "=" for zooming in
+8. Press "-" for zooming out
+9. Press esc for closing window
 
 

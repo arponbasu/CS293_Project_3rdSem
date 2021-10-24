@@ -3,7 +3,7 @@
 #include <string>
 #include<iostream>
 int main() {
-    sf::RenderWindow window(sf::VideoMode(600, 400), "Help Window");
+    sf::RenderWindow window(sf::VideoMode(600, 500), "Help Window");
     sf::Font font;
     std::ifstream ifs("Help.txt");
     std::string content;
