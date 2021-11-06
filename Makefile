@@ -1,15 +1,11 @@
-all: main Help
-
 CC=g++
-CFLAGS=-O3 -ffast-math -w -Wall
+CFLAGS= -w -O3 -ffast-math -Wall
 LIBS=-lsfml-graphics -lsfml-window -lsfml-system -lpthread
 
 main: main.o
-    $(CC) $(CFLAGS) -o main main.cpp $(LIBS) 
-    
+	$(CC) $(CFLAGS) -o main main.cpp $(LIBS)
 Help: Help.o
-    g++ -o Help Help.cpp -lsfml-graphics -lsfml-window -lsfml-system
-    
+	$(CC) -o Help Help.cpp $(LIBS)    
 clean:
-    rm -f *.o *.png main Help
+	rm -f *.o *.png main Help
 

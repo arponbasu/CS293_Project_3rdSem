@@ -3,7 +3,6 @@
 #include <vector>
 #include <thread>
 #include <cmath>
-#include <iostream>
 
 
 static constexpr int IMAGE_WIDTH = 1000;
@@ -17,11 +16,11 @@ public:
     Mandelbrot();
     void updateImage(double zoom, double offsetX, double offsetY, sf::Image& image, std::string mode) const; 
 private:
-    static const int MAX = 127; // maximum number of iterations for mandelbrot()
+    static const int MAX = 127; // maximum number of iterations for getNumIterations()
                          // don't increase MAX or the colouring will look strange
     std::array<sf::Color, MAX+1> colors;
 
-    int mandelbrot(double startReal, double startImag) const;
+    int getNumIterations(double startReal, double startImag) const;
     sf::Color getColor(int iterations) const;
     sf::Color getSmoothColor(double startReal, double startImag) const;
     std::vector<double> getVectorColor(int iterations) const;
@@ -34,7 +33,7 @@ Mandelbrot::Mandelbrot() {
     }
 }
 
-int Mandelbrot::mandelbrot(double startReal, double startImag) const {
+int Mandelbrot::getNumIterations(double startReal, double startImag) const {
     double zReal = startReal;
     double zImag = startImag;
 
@@ -155,7 +154,7 @@ void Mandelbrot::updateImageSlice(double zoom, double offsetX, double offsetY, s
     for (int x = 0; x < IMAGE_WIDTH; x++, real += zoom) {
         double imag = imagstart;
         for (int y = minY; y < maxY; y++, imag += zoom) {
-	    if(mode == "normal") image.setPixel(x, y, colors[mandelbrot(real, imag)]);
+	    if(mode == "normal") image.setPixel(x, y, colors[getNumIterations(real, imag)]);
 	    else if (mode == "exp-res") image.setPixel(x, y, getSmoothColor(real, imag));
         }
     }
@@ -183,14 +182,14 @@ std::string generateFileName(){
     return str;
 }
 
-int main() {
+int main(int argc, char** argv) {
     double offsetX = -0.7; // and move around
     double offsetY = 0.0;
     double zoom = 0.004; // allow the user to zoom in and out...
     double factor = 1.0;
     Mandelbrot mb;
-    std::string mode;
-    std::cin >> mode;
+    std::string mode(argv[1]);
+    //std::cin >> mode;
     sf::RenderWindow window(sf::VideoMode(IMAGE_WIDTH, IMAGE_HEIGHT), "Mandelbrot");
     window.setFramerateLimit(0);
     
@@ -261,4 +260,17 @@ int main() {
         window.display();
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+//References: https://codereview.stackexchange.com/questions/124358/mandelbrot-image-generator-and-viewer
 

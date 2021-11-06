@@ -1,7 +1,7 @@
 For running animation:
-1. Type  "  make '.RECIPEPREFIX+='  "
-2. Then type ./main & press enter
-3. Then type either "normal" or "exp-res" 
+1. Type run.sh
+2. Then type either "normal" or "exp-res" 
+3. Press enter
 The various features of this animation are:
 1. Press U for moving fractal upwards
 2. Press D for moving fractal downwards
@@ -11,6 +11,6 @@ The various features of this animation are:
 6. See titlebar for zoom level
 7. Press "=" for zooming in
 8. Press "-" for zooming out
-9. Press esc for closing window
-
+9. Press esc for closing the fractal window
+10. Press x to close this window
 
