@@ -364,7 +364,7 @@ private:
     int getNumIterations(double startReal, double startImag) const;
     sf::Color getColor(int iterations) const;
     sf::Color getSmoothColor(double startReal, double startImag) const;
-    myVector<double> getVectorColor(int iterations) const;
+    std::vector<double> getVectorColor(int iterations) const;
     void updateImageSlice(double zoom, double offsetX, double offsetY, sf::Image& image, int minY, int maxY, std::string mode) const;
 };
 
@@ -399,18 +399,15 @@ sf::Color Mandelbrot::getColor(int iterations) const {
         r = 16 * (16 - iterations);
         g = 0;
         b = 16 * iterations - 1;
-    } 
-    else if (iterations < 32) {
+    } else if (iterations < 32) {
         r = 0;
         g = 16 * (iterations - 16);
         b = 16 * (32 - iterations) - 1;
-    } 
-    else if (iterations < 64) {
+    } else if (iterations < 64) {
         r = 8 * (iterations - 32);
         g = 8 * (64 - iterations) - 1;
         b = 0;
-    } 
-    else { // range is 64 - 127
+    } else { // range is 64 - 127
         r = 255 - (iterations - 64) * 4;
         g = 0;
         b = 0;
@@ -418,7 +415,7 @@ sf::Color Mandelbrot::getColor(int iterations) const {
     return sf::Color(r, g, b);
 }
 
-myVector<double> Mandelbrot::getVectorColor(int iterations) const {
+std::vector<double> Mandelbrot::getVectorColor(int iterations) const {
     double r, g, b;
     // colour gradient:      Red -> Blue -> Green -> Red -> Black
     // corresponding values:  0  ->  16  ->  32   -> 64  ->  127 (or -1)
@@ -444,11 +441,7 @@ myVector<double> Mandelbrot::getVectorColor(int iterations) const {
         g = 0.0;
         b = 0.0;
     }
-    myVector<double> v;
-    v.push(r);
-    v.push(g);
-    v.push(b);
-    return v;
+    return {r, g, b};
 }
 
 double absoluteValue (double startReal, double startImag){
@@ -456,9 +449,18 @@ double absoluteValue (double startReal, double startImag){
 
 }
 
+void multScalar (std::vector<double>& v, double k){
+    for(int i = 0; i < v.size(); ++i) v[i] *= k;
+}
 
+std::vector<double> addVector (std::vector<double>& v1, std::vector<double>& v2){
+    std::vector<double> retval;
+    for(int i = 0; i < v1.size(); ++i) retval.push_back(v1[i] + v2[i]);
+    return retval;
+}
 
 sf::Color Mandelbrot::getSmoothColor(double startReal, double startImag) const {
+
     double zReal = startReal;
     double zImag = startImag;
     double expiter = 0;
@@ -467,7 +469,7 @@ sf::Color Mandelbrot::getSmoothColor(double startReal, double startImag) const {
         double r2 = zReal * zReal;
         double i2 = zImag * zImag;
         if (r2 + i2 > 4.0) {
-            //return counter
+            //return counter;
             iter = counter;
             break;
         }
@@ -479,14 +481,15 @@ sf::Color Mandelbrot::getSmoothColor(double startReal, double startImag) const {
     }
     auto toValue = getVectorColor(iter);
     auto fromValue = getVectorColor(std::min(iter + 1, MAX));
-    toValue.multScalar(expiter);
-    fromValue.multScalar(1 - expiter);
-    auto x = toValue + fromValue;
+    multScalar(toValue, expiter);
+    multScalar(fromValue, 1 - expiter);
+    auto x = addVector(toValue, fromValue);
     return sf::Color(int(x[0]),int(x[1]),int(x[2]));
 }
 
 
-void Mandelbrot::updateImageSlice(double zoom, double offsetX, double offsetY, sf::Image& image, int minY, int maxY, std::string mode) const{
+void Mandelbrot::updateImageSlice(double zoom, double offsetX, double offsetY, sf::Image& image, int minY, int maxY, std::string mode) const
+{
     double real = 0 * zoom - IMAGE_WIDTH / 2.0 * zoom + offsetX;
     double imagstart = minY * zoom - IMAGE_HEIGHT / 2.0 * zoom + offsetY;
     for (int x = 0; x < IMAGE_WIDTH; x++, real += zoom) {
@@ -498,10 +501,16 @@ void Mandelbrot::updateImageSlice(double zoom, double offsetX, double offsetY, s
     }
 }
 
-void Mandelbrot::updateImage(double zoom, double offsetX, double offsetY, sf::Image& image, std::string mode) const{
-
-    updateImageSlice(zoom, offsetX, 
-            offsetY, std::ref(image), 0, IMAGE_HEIGHT, mode);
+void Mandelbrot::updateImage(double zoom, double offsetX, double offsetY, sf::Image& image, std::string mode) const
+{
+    const int STEP = IMAGE_HEIGHT/std::thread::hardware_concurrency();
+    std::vector<std::thread> threads;
+    for (int i = 0; i < IMAGE_HEIGHT; i += STEP) {
+        threads.push_back(std::thread(&Mandelbrot::updateImageSlice, *this, zoom, offsetX, offsetY, std::ref(image), i, std::min(i+STEP, IMAGE_HEIGHT), mode));
+    }
+    for (auto &t : threads) {
+        t.join();
+    }
 }
 
 std::string generateFileName(){
@@ -520,13 +529,7 @@ int main(int argc, char** argv) {
     double zoom = 0.004; // allow the user to zoom in and out...
     double factor = 1.0;
     Mandelbrot mb;
-    std::string mode;
-    if(argc >= 2){
-        std::string cp(argv[1]);
-        mode = cp;
-    }
-    else
-        mode = "exp-res";
+    std::string mode(argv[1]);
     //std::cin >> mode;
     sf::RenderWindow window(sf::VideoMode(IMAGE_WIDTH, IMAGE_HEIGHT), "Mandelbrot");
     window.setFramerateLimit(0);
@@ -598,17 +601,3 @@ int main(int argc, char** argv) {
         window.display();
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-//References: https://codereview.stackexchange.com/questions/124358/mandelbrot-image-generator-and-viewer
-
