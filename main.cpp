@@ -10,7 +10,7 @@ static constexpr int IMAGE_WIDTH = 1000;
 static constexpr int IMAGE_HEIGHT = 600;
 static constexpr long double ZOOM_FACTOR = 0.9;
 static constexpr int OFFSET_FACTOR = 40;
-
+//static constexpr int THREAD_COUNT = 2; //Try to keep THREAD_COUNT a divisor of IMAGE_HEIGHT
 
 
 template <typename T> class myVector{
@@ -498,18 +498,10 @@ void Mandelbrot::updateImageSlice(double zoom, double offsetX, double offsetY, s
     }
 }
 
-void Mandelbrot::updateImage(double zoom, double offsetX, double offsetY, sf::Image& image, std::string mode) const
-{
-    const int STEP = IMAGE_HEIGHT/std::thread::hardware_concurrency();
-    std::vector<std::thread> threads;
-    //myVector<std::thread> threads;
-    for (int i = 0; i < IMAGE_HEIGHT; i += STEP) {
-        threads.push_back(std::thread(&Mandelbrot::updateImageSlice, *this, zoom, offsetX, offsetY, std::ref(image), i, std::min(i+STEP, IMAGE_HEIGHT), mode));    
+void Mandelbrot::updateImage(double zoom, double offsetX, double offsetY, sf::Image& image, std::string mode) const{
 
-    }
-    for (int i = 0; i < threads.size(); ++i) 
-        threads[i].join();
-    
+    updateImageSlice(zoom, offsetX, 
+            offsetY, std::ref(image), 0, IMAGE_HEIGHT, mode);
 }
 
 std::string generateFileName(){
