@@ -3,12 +3,14 @@
 #include <vector>
 #include <thread>
 #include <cmath>
+#include <iostream>
 
 
 static constexpr int IMAGE_WIDTH = 1000;
 static constexpr int IMAGE_HEIGHT = 600;
 static constexpr long double ZOOM_FACTOR = 0.9;
 static constexpr int OFFSET_FACTOR = 40;
+
 
 
 template <typename T> class myVector{
@@ -21,8 +23,8 @@ public:
 	// an initial capacity of 1 element and
 	// allocating storage using dynamic allocation
 	myVector(){
-		arr = new T[1];
-		capacity = 1;
+		arr = new T[4];
+		capacity = 4;
 		current = 0;
 	}
 
@@ -89,11 +91,262 @@ public:
 	// function to print array elements
 	void print(){
 		for (int i = 0; i < current; i++) {
-			cout << arr[i] << " ";
+			std::cout << arr[i] << " ";
 		}
 		std::cout << std::endl;
 	}
+
+    T& operator [](int idx) const{
+        return arr[idx];
+    }
+
+
+    void multScalar (double k){
+        for(int i = 0; i < current; ++i) 
+            arr[i] *= k;
+    }
+
+    myVector operator + (myVector const &obj) {
+         myVector retval;
+         for(int i = 0; i < current; ++i) 
+            retval.push(arr[i] + obj[i]);
+         return retval;
+    }
+
+    
+
 };
+
+
+size_t string_length (const char *str){
+        const char *s;
+        for (s = str; *s; ++s);
+        return (s - str);
+}
+
+void string_copy(char *c, const char* s){
+    while (*c++ = *s++);
+}
+
+char * my_strcat(char *dest, const char *src){
+    char *rdest = dest;
+
+    while (*dest)
+      dest++;
+    while (*dest++ = *src++);
+    return rdest;
+}
+
+// Class myString
+class myString {
+
+	// Prototype for stream insertion
+	friend std::ostream&
+	operator<<(
+		std::ostream& os,
+		const myString& obj);
+
+	// Prototype for stream extraction
+	friend std::istream& operator>>(std::istream& is, myString& obj);
+
+	// Prototype for '+'
+	// operator overloading
+	friend myString operator+ (const myString& lhs, const myString& rhs);
+	char* str;
+
+public:
+	// No arguments constructor
+	myString();
+
+	// pop_back() function
+	void pop_bk();
+
+	// push_back() function
+	void push_bk(char a);
+
+	// To get the length
+	int get_length();
+
+	// Function to copy the string
+	// of length len from position pos
+	void cpy(char s[], int len, int pos);
+
+	// Swap strings function
+	void swp(myString& rhs);
+
+	// Constructor with 1 arguments
+	myString(char* val);
+
+	// Copy Constructor
+	myString(const myString& source);
+
+	// Move Constructor
+	myString(myString&& source);
+
+	// Overloading the assignment
+	// operator
+	myString& operator=(const myString& rhs);
+
+	// Destructor
+	~myString() { 
+        delete str; 
+    }
+};
+
+// Overloading the assignment operator
+myString& myString::operator=(const myString& rhs){
+	
+    if (this == &rhs)
+		return *this;
+	delete[] str;
+	str = new char[string_length(rhs.str) + 1];
+	string_copy(str, rhs.str);
+	return *this;
+
+}
+
+// Overloading the plus operator
+myString operator+ (const myString& lhs, const myString& rhs){
+	int length = string_length(lhs.str) + string_length(rhs.str);
+
+	char* buff = new char[length + 1];
+
+	// Copy the strings to buff[]
+	string_copy(buff, lhs.str);
+	my_strcat(buff, rhs.str);
+
+	// String temp
+	myString temp{ buff };
+
+	// delete the buff[]
+	delete[] buff;
+
+	// Return the concatenated string
+	return temp;
+}
+// Overloading the stream
+// extraction operator
+std::istream& operator>>(std::istream& is, myString& obj){
+	char* buff = new char[1000];
+	is >> buff;
+	obj = myString{ buff };
+	delete[] buff;
+	return is;
+}
+
+// Overloading the stream
+// insertion operator
+std::ostream& operator<<(std::ostream& os, const myString& obj){
+	os << obj.str;
+	return os;
+}
+
+// Function for swapping string
+void myString::swp(myString& rhs){
+	myString temp{ rhs };
+	rhs = *this;
+	*this = temp;
+}
+
+// Function to copy the string
+void myString::cpy(char s[], int len, int pos){
+	
+    for (int i = 0; i < len; i++) {
+		s[i] = str[pos + i];
+	}
+	s[len] = '\0';
+}
+
+// Function to implement push_bk
+void myString::push_bk(char a)
+{
+	// Find length of string
+	int length = string_length(str);
+
+	char* buff = new char[length + 2];
+
+	// Copy character from str
+	// to buff[]
+	for (int i = 0; i < length; i++) {
+		buff[i] = str[i];
+	}
+	buff[length] = a;
+	buff[length + 1] = '\0';
+
+	// Assign the new string with
+	// char a to string str
+	*this = myString{ buff };
+
+	// Delete the temp buff[]
+	delete[] buff;
+}
+
+// Function to implement pop_bk
+void myString::pop_bk()
+{
+	int length = string_length(str);
+	char* buff = new char[length];
+
+	// Copy character from str
+	// to buff[]
+	for (int i = 0; i < length - 1; i++)
+		buff[i] = str[i];
+	buff[length] = '\0';
+
+	// Assign the new string with
+	// char a to string str
+	*this = myString{ buff };
+
+	// delete the buff[]
+	delete[] buff;
+}
+
+// Function to implement get_length
+int myString::get_length(){
+	return string_length(str);
+}
+
+// Function to illustrate Constructor
+// with no arguments
+myString::myString(): str{ nullptr }{
+	str = new char[1];
+	str[0] = '\0';
+}
+
+// Function to illustrate Constructor
+// with one arguments
+myString::myString(char* val){
+	
+    if (val == nullptr) {
+		str = new char[1];
+		str[0] = '\0';
+	}
+
+	else {
+
+		str = new char[string_length(val) + 1];
+
+		// Copy character of val[]
+		// using string_copy
+		string_copy(str, val);
+	}
+}
+
+// Function to illustrate
+// Copy Constructor
+myString::myString(const myString& source){
+	
+    str = new char[string_length(source.str) + 1];
+	string_copy(str, source.str);
+}
+
+// Function to illustrate
+// Move Constructor
+myString::myString(myString&& source){
+	
+    str = source.str;
+	source.str = nullptr;
+}
 
 
 
@@ -111,7 +364,7 @@ private:
     int getNumIterations(double startReal, double startImag) const;
     sf::Color getColor(int iterations) const;
     sf::Color getSmoothColor(double startReal, double startImag) const;
-    std::vector<double> getVectorColor(int iterations) const;
+    myVector<double> getVectorColor(int iterations) const;
     void updateImageSlice(double zoom, double offsetX, double offsetY, sf::Image& image, int minY, int maxY, std::string mode) const;
 };
 
@@ -146,15 +399,18 @@ sf::Color Mandelbrot::getColor(int iterations) const {
         r = 16 * (16 - iterations);
         g = 0;
         b = 16 * iterations - 1;
-    } else if (iterations < 32) {
+    } 
+    else if (iterations < 32) {
         r = 0;
         g = 16 * (iterations - 16);
         b = 16 * (32 - iterations) - 1;
-    } else if (iterations < 64) {
+    } 
+    else if (iterations < 64) {
         r = 8 * (iterations - 32);
         g = 8 * (64 - iterations) - 1;
         b = 0;
-    } else { // range is 64 - 127
+    } 
+    else { // range is 64 - 127
         r = 255 - (iterations - 64) * 4;
         g = 0;
         b = 0;
@@ -162,7 +418,7 @@ sf::Color Mandelbrot::getColor(int iterations) const {
     return sf::Color(r, g, b);
 }
 
-std::vector<double> Mandelbrot::getVectorColor(int iterations) const {
+myVector<double> Mandelbrot::getVectorColor(int iterations) const {
     double r, g, b;
     // colour gradient:      Red -> Blue -> Green -> Red -> Black
     // corresponding values:  0  ->  16  ->  32   -> 64  ->  127 (or -1)
@@ -188,7 +444,11 @@ std::vector<double> Mandelbrot::getVectorColor(int iterations) const {
         g = 0.0;
         b = 0.0;
     }
-    return {r, g, b};
+    myVector<double> v;
+    v.push(r);
+    v.push(g);
+    v.push(b);
+    return v;
 }
 
 double absoluteValue (double startReal, double startImag){
@@ -196,15 +456,7 @@ double absoluteValue (double startReal, double startImag){
 
 }
 
-void multScalar (std::vector<double>& v, double k){
-    for(int i = 0; i < v.size(); ++i) v[i] *= k;
-}
 
-std::vector<double> addVector (std::vector<double>& v1, std::vector<double>& v2){
-    std::vector<double> retval;
-    for(int i = 0; i < v1.size(); ++i) retval.push_back(v1[i] + v2[i]);
-    return retval;
-}
 
 sf::Color Mandelbrot::getSmoothColor(double startReal, double startImag) const {
     double zReal = startReal;
@@ -227,9 +479,9 @@ sf::Color Mandelbrot::getSmoothColor(double startReal, double startImag) const {
     }
     auto toValue = getVectorColor(iter);
     auto fromValue = getVectorColor(std::min(iter + 1, MAX));
-    multScalar(toValue, expiter);
-    multScalar(fromValue, 1 - expiter);
-    auto x = addVector(toValue, fromValue);
+    toValue.multScalar(expiter);
+    fromValue.multScalar(1 - expiter);
+    auto x = toValue + fromValue;
     return sf::Color(int(x[0]),int(x[1]),int(x[2]));
 }
 
@@ -250,12 +502,14 @@ void Mandelbrot::updateImage(double zoom, double offsetX, double offsetY, sf::Im
 {
     const int STEP = IMAGE_HEIGHT/std::thread::hardware_concurrency();
     std::vector<std::thread> threads;
+    //myVector<std::thread> threads;
     for (int i = 0; i < IMAGE_HEIGHT; i += STEP) {
-        threads.push_back(std::thread(&Mandelbrot::updateImageSlice, *this, zoom, offsetX, offsetY, std::ref(image), i, std::min(i+STEP, IMAGE_HEIGHT), mode));
+        threads.push_back(std::thread(&Mandelbrot::updateImageSlice, *this, zoom, offsetX, offsetY, std::ref(image), i, std::min(i+STEP, IMAGE_HEIGHT), mode));    
+
     }
-    for (auto &t : threads) {
-        t.join();
-    }
+    for (int i = 0; i < threads.size(); ++i) 
+        threads[i].join();
+    
 }
 
 std::string generateFileName(){
@@ -274,7 +528,13 @@ int main(int argc, char** argv) {
     double zoom = 0.004; // allow the user to zoom in and out...
     double factor = 1.0;
     Mandelbrot mb;
-    std::string mode(argv[1]);
+    std::string mode;
+    if(argc >= 2){
+        std::string cp(argv[1]);
+        mode = cp;
+    }
+    else
+        mode = "exp-res";
     //std::cin >> mode;
     sf::RenderWindow window(sf::VideoMode(IMAGE_WIDTH, IMAGE_HEIGHT), "Mandelbrot");
     window.setFramerateLimit(0);
