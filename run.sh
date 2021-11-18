@@ -2,5 +2,11 @@
 make -s Help
 make -s main
 ./Help
-./main $1
+if [ $# -eq 0 ]
+  then
+    ./main exp-res
+   else
+    ./main $1
+fi
+
 make -s clean
