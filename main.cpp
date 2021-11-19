@@ -2,7 +2,7 @@
 #include <thread>
 #include <cmath>
 #include <iostream>
-
+#include <stack>
 
 static constexpr int IMAGE_WIDTH = 1000;
 static constexpr int IMAGE_HEIGHT = 600;
@@ -482,11 +482,13 @@ private:
     static const int MAX = 127; // maximum number of iterations for getNumIterations()
                          // don't increase MAX or the colouring will look strange
     std::array<sf::Color, MAX+1> colors;
-
+    
+    
     int getNumIterations(const Complex& z) const;
     sf::Color getColor(int iterations) const;
     sf::Color getSmoothColor(const Complex& z) const;
     myVector<double> getVectorColor(int iterations) const;
+    sf::Color getGradientColor(int iterations, double r, double g, double b) const;
     void updateImageSlice(double zoom, double offsetX, double offsetY, sf::Image& image, int minY, int maxY, myString mode) const;
 };
 
@@ -512,6 +514,17 @@ int Mandelbrot::getNumIterations(const Complex& z) const {
         w = w*w + z;
     }
     return MAX;
+}
+
+sf::Color Mandelbrot::getGradientColor(int iterations, double r, double g, double b) const {
+    
+    double c = 255*std::min(MAX - iterations,MAX)/double(MAX);
+    return sf::Color(c*r,c*g,c*b);
+
+
+
+
+
 }
 
 sf::Color Mandelbrot::getColor(int iterations) const {
@@ -626,6 +639,21 @@ void Mandelbrot::updateImageSlice(double zoom, double offsetX, double offsetY, s
                 
 	        else if (mode == "exp-res") 
                 image.setPixel(x, y, getSmoothColor(omega));
+
+            else if (mode == "gradient")
+                image.setPixel(x, y, getGradientColor(getNumIterations(omega),1.0,1.0,1.0));
+
+            else if (mode == "smoky"){
+                double c1 = (double)rand() / (double)RAND_MAX;
+                double c2 = (double)rand() / (double)RAND_MAX;
+                double c3 = (double)rand() / (double)RAND_MAX;
+                image.setPixel(x, y, getGradientColor(getNumIterations(omega),c1,c2,c3));
+            }
+
+            else if (mode == "monochrome"){
+                image.setPixel(x, y, getGradientColor(getNumIterations(omega),0.7,0.3,0.6));
+            }
+                
         }
     }
 }
@@ -658,6 +686,8 @@ myString generateFileName(){
 }
 
 int main(int argc, char* argv[]) {
+
+    srand((unsigned)time(NULL));
     double offsetX = -0.7; // and move around
     double offsetY = 0.0;
     double zoom = 0.004; // allow the user to zoom in and out...
@@ -668,13 +698,16 @@ int main(int argc, char* argv[]) {
     //myString a("apple"), b("ball"), c = a + b;
     //std::cout << c << std::endl;
     
-    if(argc >= 2){
+    if(argc == 2){
         
         
         myString temp(argv[1]);
         mode = temp;
         
     }
+    
+
+
     else
         mode = "exp-res";
     //std::cin >> mode;
@@ -691,7 +724,7 @@ int main(int argc, char* argv[]) {
     sf::Sprite sprite;
 
     bool stateChanged = true; // track whether the image needs to be regenerated
-
+    
     while (window.isOpen()) {
         sf::Event event;
         
@@ -706,7 +739,8 @@ int main(int argc, char* argv[]) {
                 case sf::Event::KeyPressed:
                     
                     stateChanged = true; // image needs to be recreated when the user changes zoom or offset
-                    
+                    //std::stack<typeid(event.key.code).name()> cmd_log;
+                    //cmd_log.push(event.key.code);
                     switch (event.key.code) {
                        
                         case sf::Keyboard::Escape:
@@ -751,6 +785,10 @@ int main(int argc, char* argv[]) {
                             
                             window.capture().saveToFile(generateFileName().cast_to_string());
                             break;
+
+                        case sf::Keyboard::Z: 
+
+                            
                         
                         default: 
                             
