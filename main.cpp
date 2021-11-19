@@ -1,47 +1,68 @@
+//The SFML package
 #include <SFML/Graphics.hpp>
+
+//Threads were used for better performance. But the program also works well enough with a single chain of execution
+//Thus this library is not necessary for the execution of the program, but just an additional edge to it 
 #include <thread>
+
+//Only the sqrt and exp functions were used from this library, that too for implementing a single coloring algorithm
+//Thus the program can technically work with <thread> and <cmath> !
 #include <cmath>
-#include <iostream>
-#include <stack>
 
+//Width of window
 static constexpr int IMAGE_WIDTH = 1000;
+
+//Height of window : Change it if you may, but keep it divisible by 2
 static constexpr int IMAGE_HEIGHT = 600;
+
+//Amount by which the fractal is zoomed in or out in a single key press
 static constexpr long double ZOOM_FACTOR = 0.9;
+
+//Step size by which fractal moves left or right in a single key press
 static constexpr int OFFSET_FACTOR = 40;
-//static constexpr int THREAD_COUNT = 2; //Try to keep THREAD_COUNT a divisor of IMAGE_HEIGHT
 
+//Threshold after which we declare a particular point in the Argand plane has diverged
+//You may decrease this threshold for more "fragmented" fractals
+static constexpr double MANDELBROT_THRESHOLD = 2.0;
 
+//General templated growable vector class 
 template <typename T> class myVector{
-	T* arr;
+
+    //The underlying array beneath the structure
+	T* arr; 
+
+    //Maximum capacity of the array. Is dynamically changed
 	int capacity;
+
+    //Size of array
 	int current;
 
 public:
-	// Default constructor to initialise
-	// an initial capacity of 1 element and
-	// allocating storage using dynamic allocation
+	// Default constructor
+	// Initial capacity = 4, grows and shrinks as required
+	// allocating storage using heap allocation
 	myVector(){
 		arr = new T[4];
 		capacity = 4;
 		current = 0;
 	}
 
-	// Function to add an element at the last
+	// Equivalent of push_back in STL
 	void push(T data){
 
 		// if the number of elements is equal to the
 		// capacity, that means we don't have space to
-		// accommodate more elements. We need to double the
-		// capacity
+		// accommodate more elements. We double the
+		// capacity, according to the DSA lectures
 		if (current == capacity) {
 			T* temp = new T[2 * capacity];
 
 			// copying old array elements to new array
-			for (int i = 0; i < capacity; i++) {
+			for (int i = 0; i < capacity; i++) 
 				temp[i] = arr[i];
-			}
+			
 
-			// deleting previous array
+			// deallocating old memory
 			delete[] arr;
 			capacity *= 2;
 			arr = temp;
@@ -52,7 +73,7 @@ public:
 		current++;
 	}
 
-	// function to add element at any index
+	// function to add element at any index (rank based insertion). push function overloaded twice
 	void push(T data, int index){
 
 		// if index is equal to capacity then this
@@ -64,11 +85,13 @@ public:
 	}
 
 	// function to extract element at any index
+    // Also implemented below by overloading the [] operator 
 	T get(int index){
 
 		// if index is within the range
 		if (index < current)
 			return arr[index];
+        
 	}
 
 	// function to delete last element
@@ -86,24 +109,21 @@ public:
         return capacity; 
     }
 
-	// function to print array elements
-	void print(){
-		for (int i = 0; i < current; i++) {
-			std::cout << arr[i] << " ";
-		}
-		std::cout << std::endl;
-	}
-
+	
+    //Operator overload of the [] operator
+    //Essentially getter method for arr without allowing for modification 
+    // (Modification through the push function only)
     T& operator [](int idx) const{
         return arr[idx];
     }
 
-
+    //Multiplies vector by given scalar 
     void multScalar (double k){
         for(int i = 0; i < current; ++i) 
             arr[i] *= k;
     }
 
+    //Addition operator for two vectors. It's assumed that they're of equal sizes
     myVector operator + (myVector const &obj) {
          myVector retval;
          for(int i = 0; i < current; ++i) 
@@ -111,6 +131,8 @@ public:
          return retval;
     }
 
+    //Destructor. Default destructors don't work as memory is heap allocated
+    //Memory deallocation needs to happen explicitly
     ~myVector(){
 		delete[] arr;
 
@@ -118,17 +140,93 @@ public:
 
 };
 
+//Growable stack data structure
+template <typename T> class myStack {
 
+    T* arr;
+	int capacity;
+	int current;
+
+public:
+	// Default constructor to initialise
+	// an initial capacity of 1 element and
+	// allocating storage using dynamic allocation
+	myStack(){
+		arr = new T[4];
+		capacity = 4;
+		current = 0;
+	}
+
+	// Function to add an element at the last
+	void push(T data){
+
+		
+		if (current == capacity) {
+			T* temp = new T[2 * capacity];
+
+			// copying old array elements to new array
+			for (int i = 0; i < capacity; i++) 
+				temp[i] = arr[i];
+			
+
+			// deleting previous array
+			delete[] arr;
+			capacity *= 2;
+			arr = temp;
+		}
+
+		// Inserting data
+		arr[current] = data;
+		current++;
+	}
+
+	
+
+	// function to delete last element
+	void pop() { 
+        current--; 
+    }
+
+	// function to get size of the stack
+	int size() { 
+        return current; 
+    }
+
+	// function to get capacity of the stack
+	int getcapacity() { 
+        return capacity; 
+    }
+
+	//Returns topmost element
+    //Note how class abstraction is used to prevent access at any index
+    T top (){
+        return arr[current - 1];
+    }
+
+    //Destructor
+    ~myStack(){
+		delete[] arr;
+
+	}
+
+
+
+};
+
+
+//Small utility function to calculate length of null terminated string
 size_t string_length (const char *str){
         const char *s;
         for (s = str; *s; ++s);
         return (s - str);
 }
 
+//Utility function to copy string from one location to the other
 void string_copy(char *c, const char* s){
     while (*c++ = *s++);
 }
 
+//Equivalent of strcat in <cstring.h>
 char * my_strcat(char *dest, const char *src){
     char *rdest = dest;
 
@@ -199,8 +297,8 @@ public:
         return str;
     }
 
-    //To erase the first character of the string
-    //We simply increment the starting pointer
+    //To erase the first characters of the string
+    //Note that we have essentially established deque like methods here (insertion and deletion from both ends)
     myString erase_begin(int num){
         auto l = string_length(this->str);
         char ret[l - num + 1];
@@ -210,12 +308,14 @@ public:
         return myString(ret);
     }
 
-
+    //To delete characters from the end (we simply replace desired position with '\0')
     void erase_end(int num){
         auto l = string_length(this->str);
         str[l - num] = '\0';
     }
 
+    //std:string casting function
+    //required as some SFML methods only accept const std::string& arguments
     std::string cast_to_string () const{
         const char* ret = this->str;
         return std::string(this->str);
@@ -240,7 +340,7 @@ myString& myString::operator=(const myString& rhs){
 
 }
 
-// Overloading the plus operator
+// Overloading the addition operator
 myString operator+ (const myString& lhs, const myString& rhs){
 	int length = string_length(lhs.str) + string_length(rhs.str);
 
@@ -259,8 +359,10 @@ myString operator+ (const myString& lhs, const myString& rhs){
 	// Return the concatenated string
 	return temp;
 }
+
 // Overloading the stream
 // extraction operator
+// This is for integration with iostream
 std::istream& operator>>(std::istream& is, myString& obj){
 	char* buff = new char[1000];
 	is >> buff;
@@ -276,7 +378,7 @@ std::ostream& operator<<(std::ostream& os, const myString& obj){
 	return os;
 }
 
-// Function for swapping string
+// Function for swapping strings
 void myString::swp(myString& rhs){
 	myString temp{ rhs };
 	rhs = *this;
@@ -349,7 +451,7 @@ myString::myString(): str{ nullptr }{
 }
 
 // Function to illustrate Constructor
-// with one arguments
+// with one arguments (essentially initializing as myString var("abchfg"))
 myString::myString(char* val){
 	
     if (val == nullptr) {
@@ -375,7 +477,7 @@ myString::myString(const myString& source){
 	string_copy(this->str, source.str);
 }
 
-
+//Necessary for checking "modes" later
 bool operator== (const myString &c1, const myString &c2){
     bool b1 = (string_length(c1.str) == string_length(c2.str));
     if(!b1)
@@ -388,10 +490,12 @@ bool operator== (const myString &c1, const myString &c2){
 
 }
  
+//!= comes for free with ==
 bool operator!= (const myString &c1, const myString &c2){
-    return !(c1== c2);
+    return !(c1 == c2);
 }
 
+//double to myString casting function
 myString convert_decimal_to_string (long double d) {
     
     char strg[20];
@@ -401,7 +505,7 @@ myString convert_decimal_to_string (long double d) {
 
 }
 
-
+//our complex class
 class Complex{
     double x, y;
     public:
@@ -466,32 +570,51 @@ class Complex{
 
     //Absolute value function
     double absoluteValue (){
-        return sqrt(x*x + y*y);
+        return sqrt(x*x + y*y); //<cmath> needed for only this line
 
     }
     
 };
 
 
-
+//Actual class where the implementation of the fractal drawing happens
 class Mandelbrot {
 public:
+    //Initializes the color array
     Mandelbrot();
+
+    //This method allows for the screen to be changed on suitable calls
     void updateImage(double zoom, double offsetX, double offsetY, sf::Image& image, myString mode) const; 
 private:
     static const int MAX = 127; // maximum number of iterations for getNumIterations()
                          // don't increase MAX or the colouring will look strange
+    
+    //Colors are assigned based upon the number of iterations (signified by the indices of the array)
+    //See getColor method for exact details
     std::array<sf::Color, MAX+1> colors;
     
-    
+    //Calculates number of iterations taken by a complex number for it's absolute value to exceed 2
     int getNumIterations(const Complex& z) const;
+
+    //Assigns color based upon number of iterations. Basis for the "normal" mode
     sf::Color getColor(int iterations) const;
+
+    //Implements an exponential-based algorithm for better picture quality.
+    //Basis for the "exp-res" mode
     sf::Color getSmoothColor(const Complex& z) const;
+
+    //Utility method for helping the getSmoothColor method
     myVector<double> getVectorColor(int iterations) const;
+
+    //Implements gradient based coloring scheme. Basis for "gradient", "monochrome" and "smoky" modes
     sf::Color getGradientColor(int iterations, double r, double g, double b) const;
+
+    //Function for updating any given patch of the window
+    //updateImage calls this method for different patches (executed by different threads)
     void updateImageSlice(double zoom, double offsetX, double offsetY, sf::Image& image, int minY, int maxY, myString mode) const;
 };
 
+//Constructor initializes "color chart"
 Mandelbrot::Mandelbrot() {
     
     for (int i=0; i <= MAX; ++i) 
@@ -500,14 +623,14 @@ Mandelbrot::Mandelbrot() {
     
 }
 
-
+//Based on the mandelbrot equation w = w^2 + z, where z is our point of interest and w an iterator
 int Mandelbrot::getNumIterations(const Complex& z) const {
     
     Complex w = z;
     
     for (int counter = 0; counter < MAX; ++counter) {
         
-        if (w.absoluteValue() > 2.0) 
+        if (w.absoluteValue() > MANDELBROT_THRESHOLD) //Threshold for crossing
             return counter;
         
         
@@ -516,6 +639,11 @@ int Mandelbrot::getNumIterations(const Complex& z) const {
     return MAX;
 }
 
+//Coloring algorithm for "gradient", "monochrome" and "smoky" modes
+//Intensity of color depends upon the number of iteration taken to diverge
+//The step color (difference in intensities b/w iter and iter + 1) is determined by r,g,b
+//r, g, b are double numbers b/w 0 and 1
+//(0,0,0) is white, (1,1,1) is black
 sf::Color Mandelbrot::getGradientColor(int iterations, double r, double g, double b) const {
     
     double c = 255*std::min(MAX - iterations,MAX)/double(MAX);
@@ -527,11 +655,12 @@ sf::Color Mandelbrot::getGradientColor(int iterations, double r, double g, doubl
 
 }
 
+//Color chart for number of iterations
 sf::Color Mandelbrot::getColor(int iterations) const {
     int r, g, b;
 
-    // colour gradient:      Red -> Blue -> Green -> Red -> Black
-    // corresponding values:  0  ->  16  ->  32   -> 64  ->  127 (or -1)
+    // colour gradient:      Red | Blue | Green | Red | Black
+    // corresponding values:  0  |  16  |  32   | 64  |  127 (or -1)
     if (iterations < 16) {
         r = 16 * (16 - iterations);
         g = 0;
@@ -555,10 +684,12 @@ sf::Color Mandelbrot::getColor(int iterations) const {
     return sf::Color(r, g, b);
 }
 
+
+//same method as above, but repackages answer in diffenrent data type for convenient further use in the getSmoothColor methods
 myVector<double> Mandelbrot::getVectorColor(int iterations) const {
     double r, g, b;
-    // colour gradient:      Red -> Blue -> Green -> Red -> Black
-    // corresponding values:  0  ->  16  ->  32   -> 64  ->  127 (or -1)
+    
+    
     if(iterations <= 0){
         r = 0.0;
         g = 0.0;
@@ -595,7 +726,7 @@ myVector<double> Mandelbrot::getVectorColor(int iterations) const {
 
 
 
-
+//Implements an algorithm for smoothening out edges when a color change occurs
 sf::Color Mandelbrot::getSmoothColor(const Complex& z) const {
 
     Complex w = z;
@@ -615,6 +746,10 @@ sf::Color Mandelbrot::getSmoothColor(const Complex& z) const {
         w = w*w + z;
         
         Complex diff = w - w_old;
+        //An exponential interploation b/w the previous value and the current one is carried out
+        //This ensures boundaries don't stand out too sharply
+        //Takes a bit more time than other coloring algorithms
+        //owing to the expensive nature of the exp function from the <cmath> library
         expiter += exp(-w.absoluteValue()-0.5/(diff.absoluteValue()));
     }
     auto toValue = getVectorColor(iter);
@@ -627,29 +762,42 @@ sf::Color Mandelbrot::getSmoothColor(const Complex& z) const {
 
 
 void Mandelbrot::updateImageSlice(double zoom, double offsetX, double offsetY, sf::Image& image, int minY, int maxY, myString mode) const{
+    
+    //Some coordinate geometry locate the patch based on parameters defined at beginning of the file
     double real = 0 * zoom - IMAGE_WIDTH / 2.0 * zoom + offsetX;
     double imagstart = minY * zoom - IMAGE_HEIGHT / 2.0 * zoom + offsetY;
+    
     for (int x = 0; x < IMAGE_WIDTH; x++, real += zoom) {
+        
         double imag = imagstart;
+        
         for (int y = minY; y < maxY; y++, imag += zoom) {
+            //Point to be colored
             Complex omega(real, imag);
+            
+            //Normal color chart based algorithm
 	        if(mode == "normal") 
                 image.setPixel(x, y, colors[getNumIterations(omega)]);
             
-                
+            //Exponential smoothing of above algorithm
 	        else if (mode == "exp-res") 
                 image.setPixel(x, y, getSmoothColor(omega));
 
-            else if (mode == "gradient")
+            //Grey gradient based coloring algorithm
+            //Boundaries are even smoother here than the exponential interpolation algorithm
+            else if (mode == "gradient") 
                 image.setPixel(x, y, getGradientColor(getNumIterations(omega),1.0,1.0,1.0));
 
-            else if (mode == "smoky"){
+            // Random scrambling of non black pixels to annihilate boundaries altogether
+            else if (mode == "smoky"){ 
                 double c1 = (double)rand() / (double)RAND_MAX;
                 double c2 = (double)rand() / (double)RAND_MAX;
                 double c3 = (double)rand() / (double)RAND_MAX;
                 image.setPixel(x, y, getGradientColor(getNumIterations(omega),c1,c2,c3));
             }
 
+            //Gradient algorithm on a pinkish background
+            //Feel free to change this
             else if (mode == "monochrome"){
                 image.setPixel(x, y, getGradientColor(getNumIterations(omega),0.7,0.3,0.6));
             }
@@ -658,6 +806,10 @@ void Mandelbrot::updateImageSlice(double zoom, double offsetX, double offsetY, s
     }
 }
 
+
+//Function which constructs together an image out of updateImage Slice outputs from individual patches
+//Currently only 2 threads, but any thread_count (dividing IMAGE_HEIGHT to prevent integer division issues) from
+//1 - 10 should work
 void Mandelbrot::updateImage(double zoom, double offsetX, double offsetY, sf::Image& image, myString mode) const{
 
     std::thread t1(&Mandelbrot::updateImageSlice, *this, zoom, offsetX, 
@@ -668,6 +820,7 @@ void Mandelbrot::updateImage(double zoom, double offsetX, double offsetY, sf::Im
     t2.join();
 }
 
+//Utility function for creating file names after screenshots are taken
 myString generateFileName(){
 
     auto end = std::chrono::system_clock::now();
@@ -695,9 +848,8 @@ int main(int argc, char* argv[]) {
     
     Mandelbrot mb;
     myString mode;
-    //myString a("apple"), b("ball"), c = a + b;
-    //std::cout << c << std::endl;
     
+        
     if(argc == 2){
         
         
@@ -709,8 +861,9 @@ int main(int argc, char* argv[]) {
 
 
     else
-        mode = "exp-res";
-    //std::cin >> mode;
+        mode = "exp-res"; //Default mode in case of no argument is set to exp-res mode
+    
+    
     sf::RenderWindow window(sf::VideoMode(IMAGE_WIDTH, IMAGE_HEIGHT), "Mandelbrot");
     
     window.setFramerateLimit(0);
@@ -725,7 +878,7 @@ int main(int argc, char* argv[]) {
 
     bool stateChanged = true; // track whether the image needs to be regenerated
     
-    std::stack<char> st;
+    myStack<char> cmd_log; //Command log stack 
     
     while (window.isOpen()) {
         sf::Event event;
@@ -745,7 +898,7 @@ int main(int argc, char* argv[]) {
                     
                     switch (event.key.code) {
                        
-                        case sf::Keyboard::Escape:
+                        case sf::Keyboard::Escape: //esc button closes the window
                             
                             window.close();
                             break;
@@ -754,39 +907,39 @@ int main(int argc, char* argv[]) {
                             
                             zoom *= ZOOM_FACTOR;
                             factor /= ZOOM_FACTOR;
-                            st.push('=');
+                            cmd_log.push('=');
                             break;
                         
                         case sf::Keyboard::Dash: //Zooms out
                             
                             zoom /= ZOOM_FACTOR;
                             factor *= ZOOM_FACTOR;
-                            st.push('-');
+                            cmd_log.push('-');
                             break;
                         
                         case sf::Keyboard::D: //Figure moves down 
                             
                             offsetY -= OFFSET_FACTOR * zoom;
-                            st.push('D');
+                            cmd_log.push('D');
                             break;
                         
                         case sf::Keyboard::U: //Figure moves up 
                             
                             offsetY += OFFSET_FACTOR * zoom;
-                            st.push('U');
+                            cmd_log.push('U');
                             break;
                         
                         case sf::Keyboard::R: //Figure moves right 
                             
                             offsetX -= OFFSET_FACTOR * zoom;
-                            st.push('R');
+                            cmd_log.push('R');
                             break;
                         
                         
                         case sf::Keyboard::L: //Figure moves left 
                             
                             offsetX += OFFSET_FACTOR * zoom;
-                            st.push('L');
+                            cmd_log.push('L');
                             break;
                         
                         case sf::Keyboard::S: //Saves current image
@@ -794,32 +947,33 @@ int main(int argc, char* argv[]) {
                             window.capture().saveToFile(generateFileName().cast_to_string());
                             break;
 
-                        case sf::Keyboard::Z: 
-                            if(st.size() != 0){
-                                if(st.top() == '='){
-                                    st.pop();
+                        case sf::Keyboard::Z: //Function for undoing previous actions
+                        //This undo needs our stack data structure
+                            if(cmd_log.size() != 0){
+                                if(cmd_log.top() == '='){
+                                    cmd_log.pop();
                                     zoom /= ZOOM_FACTOR;
                                     factor *= ZOOM_FACTOR;
                                 }
-                                else if(st.top() == '-'){
-                                    st.pop();
+                                else if(cmd_log.top() == '-'){
+                                    cmd_log.pop();
                                     zoom *= ZOOM_FACTOR;
                                     factor /= ZOOM_FACTOR;
                                 }
-                                else if(st.top() == 'D'){
-                                    st.pop();
+                                else if(cmd_log.top() == 'D'){
+                                    cmd_log.pop();
                                     offsetY += OFFSET_FACTOR * zoom;
                                 }
-                                else if(st.top() == 'U'){
-                                    st.pop();
+                                else if(cmd_log.top() == 'U'){
+                                    cmd_log.pop();
                                     offsetY -= OFFSET_FACTOR * zoom;
                                 }
-                                else if(st.top() == 'R'){
-                                    st.pop();
+                                else if(cmd_log.top() == 'R'){
+                                    cmd_log.pop();
                                     offsetX += OFFSET_FACTOR * zoom;
                                 }
-                                else if(st.top() == 'L'){
-                                    st.pop();
+                                else if(cmd_log.top() == 'L'){
+                                    cmd_log.pop();
                                     offsetX -= OFFSET_FACTOR * zoom;
                                 }
                                 break;
@@ -844,6 +998,7 @@ int main(int argc, char* argv[]) {
 
             texture.setSmooth(true);
 
+            //This displays current zoom level on the top of the screen
             const myString strg = myString("Mandelbrot: ") + convert_decimal_to_string(factor) + myString("x"); 
 
             window.setTitle(strg.cast_to_string());	
