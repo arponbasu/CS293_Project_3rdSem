@@ -725,6 +725,8 @@ int main(int argc, char* argv[]) {
 
     bool stateChanged = true; // track whether the image needs to be regenerated
     
+    std::stack<char> st;
+    
     while (window.isOpen()) {
         sf::Event event;
         
@@ -739,8 +741,8 @@ int main(int argc, char* argv[]) {
                 case sf::Event::KeyPressed:
                     
                     stateChanged = true; // image needs to be recreated when the user changes zoom or offset
-                    //std::stack<typeid(event.key.code).name()> cmd_log;
-                    //cmd_log.push(event.key.code);
+                    
+                    
                     switch (event.key.code) {
                        
                         case sf::Keyboard::Escape:
@@ -752,33 +754,39 @@ int main(int argc, char* argv[]) {
                             
                             zoom *= ZOOM_FACTOR;
                             factor /= ZOOM_FACTOR;
+                            st.push('=');
                             break;
                         
                         case sf::Keyboard::Dash: //Zooms out
                             
                             zoom /= ZOOM_FACTOR;
                             factor *= ZOOM_FACTOR;
+                            st.push('-');
                             break;
                         
                         case sf::Keyboard::D: //Figure moves down 
                             
                             offsetY -= OFFSET_FACTOR * zoom;
+                            st.push('D');
                             break;
                         
                         case sf::Keyboard::U: //Figure moves up 
                             
                             offsetY += OFFSET_FACTOR * zoom;
+                            st.push('U');
                             break;
                         
                         case sf::Keyboard::R: //Figure moves right 
                             
                             offsetX -= OFFSET_FACTOR * zoom;
+                            st.push('R');
                             break;
                         
                         
-                        case sf::Keyboard::L: //Figure moves right 
+                        case sf::Keyboard::L: //Figure moves left 
                             
                             offsetX += OFFSET_FACTOR * zoom;
+                            st.push('L');
                             break;
                         
                         case sf::Keyboard::S: //Saves current image
@@ -787,8 +795,36 @@ int main(int argc, char* argv[]) {
                             break;
 
                         case sf::Keyboard::Z: 
-
-                            
+                            if(st.size() != 0){
+                                if(st.top() == '='){
+                                    st.pop();
+                                    zoom /= ZOOM_FACTOR;
+                                    factor *= ZOOM_FACTOR;
+                                }
+                                else if(st.top() == '-'){
+                                    st.pop();
+                                    zoom *= ZOOM_FACTOR;
+                                    factor /= ZOOM_FACTOR;
+                                }
+                                else if(st.top() == 'D'){
+                                    st.pop();
+                                    offsetY += OFFSET_FACTOR * zoom;
+                                }
+                                else if(st.top() == 'U'){
+                                    st.pop();
+                                    offsetY -= OFFSET_FACTOR * zoom;
+                                }
+                                else if(st.top() == 'R'){
+                                    st.pop();
+                                    offsetX += OFFSET_FACTOR * zoom;
+                                }
+                                else if(st.top() == 'L'){
+                                    st.pop();
+                                    offsetX -= OFFSET_FACTOR * zoom;
+                                }
+                                break;
+                            }
+                            break;
                         
                         default: 
                             
