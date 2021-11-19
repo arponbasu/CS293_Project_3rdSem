@@ -1,12 +1,14 @@
 #!/bin/bash
-make -s Help
-make -s main
+sudo apt-get install libsfml-dev 
+g++ -w -o Help Help.cpp -lsfml-graphics -lsfml-window -lsfml-system
+g++ -w -O3 -ffast-math -Wall -o main main.cpp -lsfml-graphics -lsfml-window -lsfml-system -lpthread 
+ 
 ./Help
 if [ $# -eq 0 ]
   then
-    ./main exp-res
+    ./main exp-res 
    else
-    ./main $1
+    ./main $1 
 fi
 
-make -s clean
+rm -f *.o *.png main Help dump

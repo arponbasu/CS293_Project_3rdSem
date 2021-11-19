@@ -1,3 +1,12 @@
-References
+References Used
 1. https://www.sfml-dev.org/tutorials/2.5/start-linux.php
+2. https://stackoverflow.com/questions/2488563/strcat-implementation
+3. https://stackoverflow.com/questions/49413930/how-do-i-implement-strcpy-function-in-c
+4. https://codereview.stackexchange.com/questions/124358/mandelbrot-image-generator-and-viewer
+5. https://solarianprogrammer.com/2013/02/28/mandelbrot-set-cpp-11/
+6. https://www.geeksforgeeks.org/how-to-implement-our-own-vector-class-in-c/
+7. https://stackoverflow.com/questions/34593263/c-overloading-operator
+8. https://www.geeksforgeeks.org/how-to-create-a-custom-string-class-in-c-with-basic-functionalities/
+9. https://stackoverflow.com/questions/1733281/where-is-the-implementation-of-strlen-in-gcc
+
 

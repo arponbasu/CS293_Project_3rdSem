@@ -1,18 +1,27 @@
 #include <SFML/Graphics.hpp>
+
 #include <fstream>
+
 #include <string>
-#include<iostream>
+
+
 int main() {
-    sf::RenderWindow window(sf::VideoMode(600, 500), "Help Window");
+
+    sf::RenderWindow window(sf::VideoMode(600, 575), "Help Window");
+    
     sf::Font font;
-    std::ifstream ifs("Help.txt");
+    
+    std::ifstream ifs("README.txt");
+    
     std::string content;
+
     content.assign( (std::istreambuf_iterator<char>(ifs) ),
                   (std::istreambuf_iterator<char>()    ) );
-    //std:: cout << content;
-    if (!font.loadFromFile("times new roman.ttf")) {
+    
+    if (!font.loadFromFile("times new roman.ttf")) 
+
         return -1;
-    }
+    
     sf::Text message(content, font);
 
     while (window.isOpen()) {
