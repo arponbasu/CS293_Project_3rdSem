@@ -1,6 +1,4 @@
 #include <SFML/Graphics.hpp>
-#include <array>
-#include <vector>
 #include <thread>
 #include <cmath>
 #include <iostream>
@@ -113,7 +111,10 @@ public:
          return retval;
     }
 
-    
+    ~myVector(){
+		delete[] arr;
+
+	}
 
 };
 
@@ -141,10 +142,7 @@ char * my_strcat(char *dest, const char *src){
 class myString {
 
 	// Prototype for stream insertion
-	friend std::ostream&
-	operator<<(
-		std::ostream& os,
-		const myString& obj);
+	friend std::ostream& operator<<(std::ostream& os, const myString& obj);
 
 	// Prototype for stream extraction
 	friend std::istream& operator>>(std::istream& is, myString& obj);
@@ -180,12 +178,24 @@ public:
 	// Copy Constructor
 	myString(const myString& source);
 
-	// Move Constructor
-	myString(myString&& source);
+	
 
 	// Overloading the assignment
 	// operator
 	myString& operator=(const myString& rhs);
+
+    friend bool operator== (const myString &c1, const myString &c2);
+
+    friend bool operator!= (const myString &c1, const myString &c2);
+
+
+    char* ret_string() const{
+        return str;
+    }
+
+    void erase_begin(){
+        ++str;
+    }
 
 	// Destructor
 	~myString() { 
@@ -340,15 +350,75 @@ myString::myString(const myString& source){
 	string_copy(str, source.str);
 }
 
-// Function to illustrate
-// Move Constructor
-myString::myString(myString&& source){
-	
-    str = source.str;
-	source.str = nullptr;
+
+bool operator== (const myString &c1, const myString &c2){
+    bool b1 = (string_length(c1.str) == string_length(c2.str));
+    if(!b1)
+        return false;
+    for(int i = 0; i < string_length(c1.str); ++i){
+        if(c1.str[i] != c2.str[i])
+            return false;
+    }
+    return true;
+
+}
+ 
+bool operator!= (const myString &c1, const myString &c2){
+    return !(c1== c2);
 }
 
+class Complex{
+    double x, y;
+    public:
+    Complex(){
 
+    }
+
+    ~Complex(){
+        
+    }
+
+    Complex(double x, double y){
+        this->x = x;
+        this->y = y;
+    }
+    
+    Complex operator+ (const Complex& z) const{
+        Complex retval;
+        retval.x = this->x + z.x;
+        retval.y = this->y + z.y;
+        return retval;
+    }
+    Complex operator- (const Complex& z) const{
+        Complex retval;
+        retval.x = this->x - z.x;
+        retval.y = this->y - z.y;
+        return retval;
+    }
+    Complex operator* (const Complex& z) const{
+        Complex retval;
+        retval.x = (this->x)*(z.x) - (this->y)*(z.y);
+        retval.y = (this->x)*(z.y) + (this->y)*(z.x);
+        return retval;
+    }
+    Complex operator=(const Complex& rhs){
+        this->x = rhs.x;
+        this->y = rhs.y;
+        return *this;
+    }
+
+    double getX(){
+        return x;
+    }
+    double getY(){
+        return y;
+    }
+    double absoluteValue (){
+        return sqrt(x*x + y*y);
+
+    }
+    
+};
 
 
 
@@ -361,10 +431,10 @@ private:
                          // don't increase MAX or the colouring will look strange
     std::array<sf::Color, MAX+1> colors;
 
-    int getNumIterations(double startReal, double startImag) const;
+    int getNumIterations(const Complex& z) const;
     sf::Color getColor(int iterations) const;
-    sf::Color getSmoothColor(double startReal, double startImag) const;
-    std::vector<double> getVectorColor(int iterations) const;
+    sf::Color getSmoothColor(const Complex& z) const;
+    myVector<double> getVectorColor(int iterations) const;
     void updateImageSlice(double zoom, double offsetX, double offsetY, sf::Image& image, int minY, int maxY, std::string mode) const;
 };
 
@@ -374,18 +444,18 @@ Mandelbrot::Mandelbrot() {
     }
 }
 
-int Mandelbrot::getNumIterations(double startReal, double startImag) const {
-    double zReal = startReal;
-    double zImag = startImag;
 
+int Mandelbrot::getNumIterations(const Complex& z) const {
+    
+    Complex w = z;
     for (int counter = 0; counter < MAX; ++counter) {
-        double r2 = zReal * zReal;
-        double i2 = zImag * zImag;
-        if (r2 + i2 > 4.0) {
+        
+        if (w.absoluteValue() > 2.0) {
+        
             return counter;
         }
-        zImag = 2.0 * zReal * zImag + startImag;
-        zReal = r2 - i2 + startReal;
+        
+        w = w*w + z;
     }
     return MAX;
 }
@@ -399,15 +469,18 @@ sf::Color Mandelbrot::getColor(int iterations) const {
         r = 16 * (16 - iterations);
         g = 0;
         b = 16 * iterations - 1;
-    } else if (iterations < 32) {
+    } 
+    else if (iterations < 32) {
         r = 0;
         g = 16 * (iterations - 16);
         b = 16 * (32 - iterations) - 1;
-    } else if (iterations < 64) {
+    } 
+    else if (iterations < 64) {
         r = 8 * (iterations - 32);
         g = 8 * (64 - iterations) - 1;
         b = 0;
-    } else { // range is 64 - 127
+    } 
+    else { // range is 64 - 127
         r = 255 - (iterations - 64) * 4;
         g = 0;
         b = 0;
@@ -415,7 +488,7 @@ sf::Color Mandelbrot::getColor(int iterations) const {
     return sf::Color(r, g, b);
 }
 
-std::vector<double> Mandelbrot::getVectorColor(int iterations) const {
+myVector<double> Mandelbrot::getVectorColor(int iterations) const {
     double r, g, b;
     // colour gradient:      Red -> Blue -> Green -> Red -> Black
     // corresponding values:  0  ->  16  ->  32   -> 64  ->  127 (or -1)
@@ -441,76 +514,74 @@ std::vector<double> Mandelbrot::getVectorColor(int iterations) const {
         g = 0.0;
         b = 0.0;
     }
-    return {r, g, b};
+    myVector<double> v;
+    v.push(r);
+    v.push(g);
+    v.push(b);
+    return v;
 }
 
-double absoluteValue (double startReal, double startImag){
-    return sqrt(startReal*startReal + startImag*startImag);
 
-}
 
-void multScalar (std::vector<double>& v, double k){
-    for(int i = 0; i < v.size(); ++i) v[i] *= k;
-}
 
-std::vector<double> addVector (std::vector<double>& v1, std::vector<double>& v2){
-    std::vector<double> retval;
-    for(int i = 0; i < v1.size(); ++i) retval.push_back(v1[i] + v2[i]);
-    return retval;
-}
 
-sf::Color Mandelbrot::getSmoothColor(double startReal, double startImag) const {
-
-    double zReal = startReal;
-    double zImag = startImag;
+sf::Color Mandelbrot::getSmoothColor(const Complex& z) const {
+    //double zReal = startReal;
+    //double zImag = startImag;
+    Complex w = z;
     double expiter = 0;
     int iter = MAX;
     for (int counter = 0; counter < MAX; ++counter) {
-        double r2 = zReal * zReal;
-        double i2 = zImag * zImag;
-        if (r2 + i2 > 4.0) {
-            //return counter;
+        //double r2 = zReal * zReal;
+        //double i2 = zImag * zImag;
+        if (w.absoluteValue() > 2.0) {
+            //return counter
             iter = counter;
             break;
         }
-        auto zImag_old = zImag;
-        auto zReal_old = zReal;
-        zImag = 2.0 * zReal * zImag + startImag;
-        zReal = r2 - i2 + startReal;
-        expiter += exp(-absoluteValue(zReal, zImag)-0.5/(absoluteValue(zReal_old - zReal, zImag_old - zImag)));
+        //auto zImag_old = zImag;
+        //auto zReal_old = zReal;
+        auto w_old = w;
+        //zImag = 2.0 * zReal * zImag + startImag;
+        //zReal = r2 - i2 + startReal;
+        w = w*w + z;
+        Complex diff = w - w_old;
+        expiter += exp(-w.absoluteValue()-0.5/(diff.absoluteValue()));
     }
     auto toValue = getVectorColor(iter);
     auto fromValue = getVectorColor(std::min(iter + 1, MAX));
-    multScalar(toValue, expiter);
-    multScalar(fromValue, 1 - expiter);
-    auto x = addVector(toValue, fromValue);
+    toValue.multScalar(expiter);
+    fromValue.multScalar(1 - expiter);
+    auto x = toValue + fromValue;
     return sf::Color(int(x[0]),int(x[1]),int(x[2]));
 }
 
 
-void Mandelbrot::updateImageSlice(double zoom, double offsetX, double offsetY, sf::Image& image, int minY, int maxY, std::string mode) const
-{
+void Mandelbrot::updateImageSlice(double zoom, double offsetX, double offsetY, sf::Image& image, int minY, int maxY, std::string mode) const{
     double real = 0 * zoom - IMAGE_WIDTH / 2.0 * zoom + offsetX;
     double imagstart = minY * zoom - IMAGE_HEIGHT / 2.0 * zoom + offsetY;
     for (int x = 0; x < IMAGE_WIDTH; x++, real += zoom) {
         double imag = imagstart;
         for (int y = minY; y < maxY; y++, imag += zoom) {
-	    if(mode == "normal") image.setPixel(x, y, colors[getNumIterations(real, imag)]);
-	    else if (mode == "exp-res") image.setPixel(x, y, getSmoothColor(real, imag));
+            Complex omega(real, imag);
+	        if(mode == "normal") 
+                image.setPixel(x, y, colors[getNumIterations(omega)]);
+            
+                
+	        else if (mode == "exp-res") 
+                image.setPixel(x, y, getSmoothColor(omega));
         }
     }
 }
 
-void Mandelbrot::updateImage(double zoom, double offsetX, double offsetY, sf::Image& image, std::string mode) const
-{
-    const int STEP = IMAGE_HEIGHT/std::thread::hardware_concurrency();
-    std::vector<std::thread> threads;
-    for (int i = 0; i < IMAGE_HEIGHT; i += STEP) {
-        threads.push_back(std::thread(&Mandelbrot::updateImageSlice, *this, zoom, offsetX, offsetY, std::ref(image), i, std::min(i+STEP, IMAGE_HEIGHT), mode));
-    }
-    for (auto &t : threads) {
-        t.join();
-    }
+void Mandelbrot::updateImage(double zoom, double offsetX, double offsetY, sf::Image& image, std::string mode) const{
+
+    std::thread t1(&Mandelbrot::updateImageSlice, *this, zoom, offsetX, 
+            offsetY, std::ref(image), 0, IMAGE_HEIGHT/2, mode);
+    std::thread t2(&Mandelbrot::updateImageSlice, *this, zoom, offsetX, 
+            offsetY, std::ref(image), IMAGE_HEIGHT/2, IMAGE_HEIGHT, mode);
+    t1.join();
+    t2.join();
 }
 
 std::string generateFileName(){
@@ -529,7 +600,13 @@ int main(int argc, char** argv) {
     double zoom = 0.004; // allow the user to zoom in and out...
     double factor = 1.0;
     Mandelbrot mb;
-    std::string mode(argv[1]);
+    std::string mode;
+    if(argc >= 2){
+        std::string cp(argv[1]);
+        mode = cp;
+    }
+    else
+        mode = "exp-res";
     //std::cin >> mode;
     sf::RenderWindow window(sf::VideoMode(IMAGE_WIDTH, IMAGE_HEIGHT), "Mandelbrot");
     window.setFramerateLimit(0);
@@ -596,8 +673,8 @@ int main(int argc, char** argv) {
             stateChanged = false;
         }
         window.draw(sprite);
-        auto sfmg = sf::Mouse::getPosition(window);
-        //std::cout << "(" << sfmg.x << ", " << sfmg.y << ")";
+        
+        
         window.display();
     }
 }
