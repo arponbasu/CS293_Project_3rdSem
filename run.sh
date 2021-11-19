@@ -1,6 +1,6 @@
 #!/bin/bash
 sudo apt-get install libsfml-dev 
-g++ -w -o Help Help.cpp -lsfml-graphics -lsfml-window -lsfml-system
+g++ -w -o Help Help_Window.cpp -lsfml-graphics -lsfml-window -lsfml-system
 g++ -w -O3 -ffast-math -Wall -o main main.cpp -lsfml-graphics -lsfml-window -lsfml-system -lpthread 
  
 ./Help
